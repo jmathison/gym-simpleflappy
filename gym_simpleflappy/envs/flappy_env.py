@@ -133,6 +133,7 @@ class FlappyEnv(gym.Env):
         self.pipes[1].reset_pipe(self.np_random.uniform(self.pipe_min, self.pipe_max), self.screen_width + self.pipe_width + self.pipe_gap)
 
     def _render(self, mode='human', close=False):
+        pygame.event.pump()
         self.window.fill(self.background_color)
         pygame.draw.rect(self.window, self.ground_color, (0, self.ground_y, self.screen_width, self.screen_height))
         for pipe in self.pipes:
@@ -143,7 +144,17 @@ class FlappyEnv(gym.Env):
         pygame.display.update()
         self.fps_timer.tick(self.max_FPS)
 
-
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
+
+
+class FlappyEnvDistance(FlappyEnv):
+
+    def _step(self, action):
+        reward = 0
+        obs, _, done, info = super(FlappyEnvDistance, self)._step(action)
+        if not done:
+            reward += 1.0
+
+        return obs, reward, done, info

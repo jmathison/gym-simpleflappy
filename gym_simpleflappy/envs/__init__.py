@@ -1,1 +1,2 @@
 from gym_simpleflappy.envs.flappy_env import FlappyEnv
+from gym_simpleflappy.envs.flappy_env import FlappyEnvDistance

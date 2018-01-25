@@ -1,7 +1,7 @@
 import gym
 import gym_simpleflappy
 
-env = gym.make("simpleflappy-v0")
+env = gym.make("SimpleFlappy-v0")
 env.reset()
 
 max_eps = 1000
