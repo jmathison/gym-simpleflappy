@@ -2,10 +2,14 @@
 
 A Gym environment for a Flappy bird clone with a simple observation space.
 
-Get a reward for each pipe passed. Observations returned are:
+Observations returned are:
 ```
 [bird height, bird speed, distance to next pipe, height of next pipe, distance to second pipe, height of second pipe]
 ```
+
+Use `gym.make("SimpleFlappy-v0")` for rewards only when a pipe is passed.
+
+Use `gym.make("SimpleFlappyDistance-v0")` for rewards based on steps survived - less sparse rewards should make the task a bit easier.
 
 Installation
 --
