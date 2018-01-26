@@ -38,7 +38,8 @@ class FlappyEnv(gym.Env):
 
     # physics
     gravity = 1.0
-    jump_force = -10.0
+    jump_force = -9.0
+    max_speed = 10.0
 
     # bird
     bird_initial_x = screen_width * 0.4
@@ -84,13 +85,15 @@ class FlappyEnv(gym.Env):
 
     def _step(self, action):
 
+        pygame.event.pump()
         reward = 0
 
         if not self.done:
             if action == 1:
                 self.velocity += self.jump_force
             else:
-                self.velocity += self.gravity
+                if self.velocity < self.max_speed:
+                    self.velocity += self.gravity
 
             self.bird_y += self.velocity
 
@@ -103,9 +106,7 @@ class FlappyEnv(gym.Env):
                     if not pipe.scored:
                         pipe.scored = True
                         reward = 1.0
-                    pipe.distance_to_bird = pipe.pos + self.screen_width + self.pipe_width - self.bird_x
                 else:
-                    pipe.distance_to_bird = pipe.pos - self.bird_x
                     # Check collisions
                     if self.bird_x + self.bird_size > pipe.pos and self.bird_x < pipe.pos + self.pipe_width:
                         if self.bird_y + self.bird_size > pipe.height or self.bird_y < pipe.height - pipe.gap:
@@ -113,15 +114,24 @@ class FlappyEnv(gym.Env):
 
                 if pipe.pos + self.pipe_gap <= 0:
                     pipe.reset_pipe(self.np_random.uniform(self.pipe_min, self.pipe_max), self.screen_width)
+                pipe.distance_to_bird = self._bird_distance(pipe)
 
         # put together the game state
-        pipes_sorted = sorted(self.pipes, key=lambda p: p.distance_to_bird)
-
-        state = (self.bird_y, self.velocity, pipes_sorted[0].distance_to_bird, pipes_sorted[0].height,
-                 pipes_sorted[1].distance_to_bird, pipes_sorted[1].height)
+        state = self._build_state()
 
         return np.array(state), reward, self.done, {}
 
+    def _build_state(self):
+        pipes_sorted = sorted(self.pipes, key=lambda p: p.distance_to_bird)
+
+        return (self.bird_y, self.velocity, pipes_sorted[0].distance_to_bird, pipes_sorted[0].height,
+                 pipes_sorted[1].distance_to_bird, pipes_sorted[1].height)
+
+    def _bird_distance(self, pipe):
+        if pipe.pos + self.pipe_width < self.bird_x:
+            return pipe.pos + self.screen_width + self.pipe_width - self.bird_x
+        else:
+            return pipe.pos - self.bird_x
 
     def _reset(self):
         self.done = False
@@ -130,10 +140,14 @@ class FlappyEnv(gym.Env):
         self.velocity = 0
 
         self.pipes[0].reset_pipe(self.np_random.uniform(self.pipe_min, self.pipe_max), self.screen_width)
+        self.pipes[0].distance_to_bird = self._bird_distance(self.pipes[0])
         self.pipes[1].reset_pipe(self.np_random.uniform(self.pipe_min, self.pipe_max), self.screen_width + self.pipe_width + self.pipe_gap)
+        self.pipes[1].distance_to_bird = self._bird_distance(self.pipes[1])
+
+        return self._build_state()
 
     def _render(self, mode='human', close=False):
-        pygame.event.pump()
+
         self.window.fill(self.background_color)
         pygame.draw.rect(self.window, self.ground_color, (0, self.ground_y, self.screen_width, self.screen_height))
         for pipe in self.pipes:
